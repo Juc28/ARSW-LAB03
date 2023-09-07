@@ -24,11 +24,20 @@ public class Consumer extends Thread{
     public void run() {
         while (true) {
 
-            if (queue.size() > 0) {
-                int elem=queue.poll();
-                System.out.println("Consumer consumes "+elem);                                
+            if (queue.size()>0) {
+                synchronized (queue) {
+                    try {
+                        int elem = queue.poll();
+                        System.out.println("Consumer consumes " + elem);
+                        queue.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-            
+
         }
+
     }
+
 }
