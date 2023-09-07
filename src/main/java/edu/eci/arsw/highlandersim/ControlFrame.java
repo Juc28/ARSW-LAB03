@@ -131,7 +131,14 @@ public class ControlFrame extends JFrame {
         JButton btnStop = new JButton("STOP");
         btnStop.setForeground(Color.RED);
         toolBar.add(btnStop);
-
+        btnStop.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                for (Immortal im : immortals){
+                    im.stoped();
+                    String statsText = "<html>" + immortals.toString() + "<br>Health sum: " + im.getTotalHealth();
+                    statisticsLabel.setText(statsText);
+                }
+         }});
 
         scrollPane = new JScrollPane();
         contentPane.add(scrollPane, BorderLayout.CENTER);
