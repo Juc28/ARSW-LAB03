@@ -2,12 +2,13 @@ package edu.eci.arsw.highlandersim;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Immortal extends Thread {
 
     private ImmortalUpdateReportCallback updateCallback=null;
     
-    private int health;
+    private AtomicInteger health;
     
     private int defaultDamageValue;
 
@@ -17,19 +18,31 @@ public class Immortal extends Thread {
 
     private final Random r = new Random(System.currentTimeMillis());
 
+    private boolean paused;
+    private boolean dead;
+    private  int totalHealth = 0;
 
     public Immortal(String name, List<Immortal> immortalsPopulation, int health, int defaultDamageValue, ImmortalUpdateReportCallback ucb) {
         super(name);
         this.updateCallback=ucb;
         this.name = name;
         this.immortalsPopulation = immortalsPopulation;
-        this.health = health;
+        this.health = new AtomicInteger(health);
         this.defaultDamageValue=defaultDamageValue;
     }
 
     public void run() {
 
-        while (true) {
+        while (!dead) {
+            synchronized (this) {
+                while (paused){
+                    try {
+                        this.wait();
+                    }catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
             Immortal im;
 
             int myIndex = immortalsPopulation.indexOf(this);
@@ -56,23 +69,63 @@ public class Immortal extends Thread {
     }
 
     public void fight(Immortal i2) {
-
-        if (i2.getHealth() > 0) {
-            i2.changeHealth(i2.getHealth() - defaultDamageValue);
-            this.health += defaultDamageValue;
-            updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
-        } else {
+        boolean shouldAttack;
+        boolean isDead = getHealth() <= 0;
+        if (isDead) {
+            synchronized (immortalsPopulation) {
+                immortalsPopulation.remove(this);
+            }
+            dead = true;
+            updateCallback.processReport("Fight: " + this + " vs " + i2 + "\n");
+        }else {
+            shouldAttack = false;
+            synchronized (i2) {
+                if (i2.getHealth()>0) {
+                    shouldAttack=true;
+                    i2.changeHealth(-defaultDamageValue);
+                }
+            }
+            synchronized (this) {
+                if (shouldAttack) {
+                    this.changeHealth(defaultDamageValue);
+                }
+            }
             updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
+
+        }
+    }
+
+    public void changeHealth(int v) {
+            health.addAndGet(v);
+    }
+
+    public int getHealth() {return health.intValue();}
+
+    public synchronized void finish() {
+        dead=true;
+    }
+    public void stoped() {
+        // Detiene a todos los inmortales
+        for (Immortal immortal : immortalsPopulation) {
+            immortal.finish();
+        }
+        // Reinicia la suma de salud
+        for (Immortal immortal : immortalsPopulation) {
+            totalHealth += immortal.getHealth();
         }
 
     }
 
-    public void changeHealth(int v) {
-        health = v;
-    }
+    public int getTotalHealth() {
+        return totalHealth;}
 
-    public int getHealth() {
-        return health;
+    public boolean isPaused() {
+        paused = !paused;
+        return paused;
+    }
+    public synchronized void resumen() {
+        paused = false;
+        this.notify();
     }
 
     @Override
