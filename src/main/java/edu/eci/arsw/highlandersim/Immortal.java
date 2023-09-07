@@ -101,6 +101,24 @@ public class Immortal extends Thread {
 
     public int getHealth() {return health.intValue();}
 
+    public synchronized void finish() {
+        dead=true;
+    }
+    public void stoped() {
+        // Detiene a todos los inmortales
+        for (Immortal immortal : immortalsPopulation) {
+            immortal.finish();
+        }
+        // Reinicia la suma de salud
+        for (Immortal immortal : immortalsPopulation) {
+            totalHealth += immortal.getHealth();
+        }
+
+    }
+
+    public int getTotalHealth() {
+        return totalHealth;}
+
     public boolean isPaused() {
         paused = !paused;
         return paused;
