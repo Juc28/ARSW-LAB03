@@ -71,27 +71,27 @@ public class Immortal extends Thread {
     public void fight(Immortal i2) {
         boolean shouldAttack;
         boolean isDead = getHealth() <= 0;
-        if (isDead) {
-            synchronized (immortalsPopulation) {
-                immortalsPopulation.remove(this);
-            }
-            dead = true;
-            updateCallback.processReport("Fight: " + this + " vs " + i2 + "\n");
-        }else {
-            shouldAttack = false;
-            synchronized (i2) {
-                if (i2.getHealth()>0) {
-                    shouldAttack=true;
-                    i2.changeHealth(-defaultDamageValue);
-                }
-            }
-            synchronized (this) {
-                if (shouldAttack) {
-                    this.changeHealth(defaultDamageValue);
-                }
-            }
-            updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
+        Object lockA = immortalsPopulation.indexOf(i2) > immortalsPopulation.indexOf(this) ? i2 : this;
+        Object lockB = immortalsPopulation.indexOf(i2) < immortalsPopulation.indexOf(this)?i2:this;
+        synchronized (lockA){
+            synchronized (lockB){
+                if (isDead) {
+                    immortalsPopulation.remove(this);
+                    dead = true;
+                    updateCallback.processReport("Fight: " + this + " vs " + i2 + "\n");
+                }else {
+                    shouldAttack = false;
+                    if (i2.getHealth()>0) {
+                        shouldAttack=true;
+                        i2.changeHealth(-defaultDamageValue);
+                    }
+                    if (shouldAttack) {
+                        this.changeHealth(defaultDamageValue);
+                    }
+                    updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
 
+                }
+            }
         }
     }
 
