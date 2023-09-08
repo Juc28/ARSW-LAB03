@@ -29,7 +29,9 @@ public class Consumer extends Thread{
                     try {
                         int elem = queue.poll();
                         System.out.println("Consumer consumes " + elem);
-                        queue.wait();
+                        queue.notifyAll();
+                        Thread.sleep(1000);         // Duerme el hilo para que sea mas lento que el productor (punto1.3)
+                        //queue.wait();
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
