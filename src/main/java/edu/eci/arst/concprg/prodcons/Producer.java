@@ -31,16 +31,29 @@ public class Producer extends Thread {
     public void run() {
         while (true) {
             dataSeed = dataSeed + rand.nextInt(100);
-            System.out.println("Producer added " + dataSeed);
             synchronized (queue) {
                 try {
-                    queue.add(dataSeed);
-                    Thread.sleep(1000);
-                    queue.notifyAll();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Producer.class.getName()).log(Level.SEVERE, null, ex);
+                    queueAddLimit(dataSeed);
+                    //Thread.sleep(1000);     Se comenta para que en el punto 3 el productor sea mas rapido
+                    //queue.notifyAll();      Se comenta pues en el punto 3 ya no tiene sentido hacer esto
+                } catch (Exception ex) {
+                    try {
+                        queue.wait();           //Pone el hilo en espera cuando la cola este llena
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    //Logger.getLogger(Producer.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+        }
+    }
+
+    public void queueAddLimit(int dataSeed) throws InterruptedException{
+        if (queue.size() < stockLimit){
+            queue.add(dataSeed);
+            System.out.println("Producer added " + dataSeed);
+        } else {
+            throw new InterruptedException("");
         }
     }
 }
