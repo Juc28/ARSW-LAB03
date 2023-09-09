@@ -18,23 +18,23 @@ import java.util.logging.Logger;
 public class StartProduction {
     
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         
         Queue<Integer> queue=new LinkedBlockingQueue<>();
         
-        
-        new Producer(queue,Long.MAX_VALUE).start();
-        
+        Thread productor = new Producer(queue, 100);
+        productor.start();
+
         //let the producer create products for 5 seconds (stock).
         try {
-            Thread.sleep(5000);
+            Thread.sleep(1000);
         } catch (InterruptedException ex) {
             Logger.getLogger(StartProduction.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        
-        new Consumer(queue).start();
+        Consumer consumidor = new Consumer(queue);
+        consumidor.start();
+
     }
-    
 
 }
